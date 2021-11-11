@@ -386,4 +386,3 @@ class MainGame():
 if __name__ == '__main__':
     game = MainGame()
     game.start_game()
-#noi phét là giổi
