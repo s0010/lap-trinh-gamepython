@@ -139,6 +139,16 @@ class PeaBullet(pygame.sprite.Sprite):
                 if zombie.hp <= 0:
                     zombie.live = False
                     self.nextLevel()
+     #8 đánh boss
+
+    def hit_Boss(self):
+        for zombie in MainGame.Boss_list:
+            if pygame.sprite.collide_rect(self,zombie):
+                self.live = False
+                zombie.hp -= self.damage
+                if zombie.hp <= 0:
+                    zombie.live = False
+
     #7 đột phá
     def nextLevel(self):
         MainGame.score += 20
@@ -201,6 +211,49 @@ class Zombie(pygame.sprite.Sprite):
     #9 Nạp zombie vào bản đồ
     def display_zombie(self):
         MainGame.window.blit(self.image,self.rect)
+  
+#10 zombie Boss
+class ZombieBoss(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        super(ZombieBoss, self).__init__()
+        # self.image = pygame.image.load('imgs/zombie.png')
+        self.image = pygame.image.load('boss1.png')
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.hp = 20000
+        self.damage = 10
+        self.speed = 1
+        self.live = True
+        self.stop = False
+   
+    def move_zombie(self):
+        if self.live and not self.stop:
+            self.rect.x -= self.speed
+            if self.rect.x < -80:
+                
+                MainGame().gameOver()
+
+    def hit_plant(self):
+        for plant in MainGame.plants_list:
+            if pygame.sprite.collide_rect(self,plant):
+                self.stop = True
+                self.eat_plant(plant)
+    
+    def eat_plant(self,plant):
+        plant.hp -= self.damage
+        
+        if plant.hp <= 0:
+            a = plant.rect.y // 80 - 1
+            b = plant.rect.x // 80
+            map = MainGame.map_list[a][b]
+            map.can_grow = True
+            plant.live = False
+            
+            self.stop = False
+
+    def display_zombie(self):
+        MainGame.window.blit(self.image,self.rect)
 #1 主程序
 class MainGame():
     #2 Tạo cấp độ, điểm số, điểm số còn lại, tiền
@@ -213,6 +266,7 @@ class MainGame():
     plants_list = []
     peabullet_list = []
     zombie_list = []
+    Boss_list=[]
     count_zombie = 0
     produce_zombie = 100
     def init_window(self):
@@ -284,6 +338,7 @@ class MainGame():
                 b.move_bullet()
                 # v1.9 đạn bắn trúng thây ma ko
                 b.hit_zombie()
+                b.hit_Boss()
             else:
                 MainGame.peabullet_list.remove(b)
 
@@ -338,6 +393,24 @@ class MainGame():
                 zombie.hit_plant()
             else:
                 MainGame.zombie_list.remove(zombie)
+   #khoi tao Boss
+    def init_zombieBoss(self):
+        for i in range(2, 6):           
+            zombie = ZombieBoss(800 , i * 80)
+            MainGame.Boss_list.append(zombie)
+
+   
+    def load_zombieBoss(self):
+        zombie=MainGame.Boss_list[1]
+        if zombie.live:
+            zombie.display_zombie()
+            zombie.move_zombie()
+                
+            zombie.hit_plant()
+        else:
+            MainGame.window.blit(self.draw_text('you win'),(400,300))
+
+
     #1 Bắt đầu trò chơi
     def start_game(self):
         #1 Cửa sổ khởi tạo
@@ -348,6 +421,7 @@ class MainGame():
         #9 Gọi phương thức khởi tạo thây ma
         self.init_zombies()
         #1 Miễn là trò chơi chưa kết thúc, nó vẫn tiếp tục lặp lại
+        self.init_zombieBoss()
         while True:
             #1 Kết xuất nền trắng
             MainGame.window.fill((255, 255, 255))
@@ -367,6 +441,9 @@ class MainGame():
             if MainGame.count_zombie == MainGame.produce_zombie:
                 self.init_zombies()
                 MainGame.count_zombie = 0
+            if(MainGame.score >500): 
+                self.init_zombieBoss()
+                self.load_zombieBoss()
             pygame.time.wait(8)
             pygame.display.update()
 
